@@ -9,8 +9,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Password Manager</h1>
-        <p style="text-align: center;">By Hayden Kong</p>
+        <h1 class="h1">Password Manager</h1>
+        <p class="credits">By Hayden Kong</p>
         
         <div class="tabs">
             <button class="tab-btn active" data-tab="generate">Generate</button>
@@ -48,6 +48,13 @@
             <button id="generateBtn" class="button">Generate Password</button>
             <div class="save-password">
                 <input type="text" id="serviceName" placeholder="Enter service name">
+                <select id="category">
+                    <option value="">Select Category</option>
+                    <option value="social">Social Media</option>
+                    <option value="finance">Finance</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                </select>
                 <button id="saveBtn" class="button">Save Password</button>
             </div>
         </div>
@@ -56,18 +63,36 @@
             <div class="search-container">
                 <input type="text" id="searchInput" placeholder="Search passwords...">
             </div>
+            <div class="category-filter">
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="social">Social Media</option>
+                    <option value="finance">Finance</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                </select>
+            </div>
             <ul id="passwordList" class="password-list"></ul>
+            <div class="import-export">
+                <button id="exportBtn" class="button">Export Passwords</button>
+                <input type="file" id="importInput" accept=".json" style="display: none;">
+                <button id="importBtn" class="button">Import Passwords</button>
+            </div>
         </div>
 
         <div class="tab-content" id="settings" style="display:none;">
             <h2>Settings</h2>
             <div class="setting-option">
+                <label for="darkMode">Dark Mode</label>
+                <input type="checkbox" id="darkMode">
+            </div>
+            <div class="setting-option">
                 <label for="autoLogout">Auto Logout (minutes)</label>
-                <input type="number" id="autoLogout" min="1" max="60" value="5">
+                <input class="setting-input" type="number" id="autoLogout" min="1" max="60" value="5">
             </div>
             <div class="setting-option">
                 <label for="passwordExpiration">Password Expiration Reminder (days)</label>
-                <input type="number" id="passwordExpiration" min="30" max="365" value="90">
+                <input class="setting-input" type="number" id="passwordExpiration" min="30" max="365" value="90">
             </div>
             <button id="clearDataBtn" class="button danger">Clear All Data</button>
         </div>
@@ -86,8 +111,10 @@
         const copyBtn = document.getElementById('copyBtn');
         const saveBtn = document.getElementById('saveBtn');
         const serviceNameEl = document.getElementById('serviceName');
+        const categoryEl = document.getElementById('category');
         const passwordListEl = document.getElementById('passwordList');
         const searchInputEl = document.getElementById('searchInput');
+        const categoryFilterEl = document.getElementById('categoryFilter');
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
         const importInputEl = document.getElementById('importInput');
@@ -189,6 +216,7 @@
         function savePassword() {
             const service = serviceNameEl.value.trim();
             const password = passwordEl.value;
+            const category = categoryEl.value;
 
             if (!service || !password) {
                 alert('Please enter a service name and generate a password.');
@@ -196,10 +224,11 @@
             }
 
             const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
-            savedPasswords[service] = { password, created: new Date().toISOString() };
+            savedPasswords[service] = { password, category, created: new Date().toISOString() };
             localStorage.setItem('savedPasswords', JSON.stringify(savedPasswords));
 
             serviceNameEl.value = '';
+            categoryEl.value = '';
             updatePasswordList();
         }
 
@@ -207,17 +236,20 @@
         function updatePasswordList() {
             const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
             const searchTerm = searchInputEl.value.toLowerCase();
+            const categoryFilter = categoryFilterEl.value;
 
             passwordListEl.innerHTML = '';
 
             for (const [service, data] of Object.entries(savedPasswords)) {
                 if (
-                    (searchTerm === '' || service.toLowerCase().includes(searchTerm))
+                    (searchTerm === '' || service.toLowerCase().includes(searchTerm)) &&
+                    (categoryFilter === '' || data.category === categoryFilter)
                 ) {
                     const li = document.createElement('li');
                     li.className = 'password-item';
                     li.innerHTML = `
                     <span>${service}</span>
+                    <span class="category-tag">${data.category || 'Uncategorized'}</span>
                     <span class="hidden-password">${data.password}</span>
                     <div>
                         <button class="toggle-password" onclick="togglePassword(this)">Show</button>
@@ -249,7 +281,43 @@
             updatePasswordList();
         }
 
-        
+        // Export passwords
+        function exportPasswords() {
+            const savedPasswords = localStorage.getItem('savedPasswords');
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(savedPasswords);
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "passwords_export.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // Import passwords
+        function importPasswords(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const importedPasswords = JSON.parse(e.target.result);
+                        localStorage.setItem('savedPasswords', JSON.stringify(importedPasswords));
+                        updatePasswordList();
+                        alert('Passwords imported successfully!');
+                    } catch (error) {
+                        alert('Error importing passwords. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
 
         // Auto logout
         let logoutTimer;
@@ -308,6 +376,11 @@
             generatePassword();
         });
         searchInputEl.addEventListener('input', updatePasswordList);
+        categoryFilterEl.addEventListener('change', updatePasswordList);
+        exportBtn.addEventListener('click', exportPasswords);
+        importBtn.addEventListener('click', () => importInputEl.click());
+        importInputEl.addEventListener('change', importPasswords);
+        darkModeToggle.addEventListener('change', toggleDarkMode);
         autoLogoutEl.addEventListener('change', () => {
             localStorage.setItem('autoLogout', autoLogoutEl.value);
             startAutoLogoutTimer();
