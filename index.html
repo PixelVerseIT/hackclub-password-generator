@@ -8,7 +8,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Password Generator</h1>
+        <h1 style="margin-bottom: 2px;">Password App</h1>
+        <p style="text-align: center; margin-top: 0px;">By Hayden Kong</p>
         <div class="settings">
             <div class="slider-container">
                 <input type="range" id="length" min="4" max="50" value="16">
@@ -47,13 +48,21 @@
         </div>
         <div class="password-container">
             <input type="text" id="password" readonly>
-            <button id="copyBtn">Copy</button>
+            <button id="copyBtn" class="button">Copy</button>
         </div>
         <div class="strength-meter">
             <div></div>
         </div>
         <p class="feedback"></p>
-        <button id="generateBtn">Generate Password</button>
+        <button id="generateBtn" class="button">Generate Password</button>
+        <div class="password-container">
+            <input type="text" id="serviceName" placeholder="Enter password name">
+            <button id="saveBtn" class="button">Save</button>
+        </div>
+        <div class="saved-passwords">
+            <h2>Saved Passwords</h2>
+            <ul class="password-list" id="passwordList"></ul>
+        </div>
     </div>
 
     <script>
@@ -66,6 +75,9 @@
         const passwordEl = document.getElementById('password');
         const generateBtn = document.getElementById('generateBtn');
         const copyBtn = document.getElementById('copyBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const serviceNameEl = document.getElementById('serviceName');
+        const passwordListEl = document.getElementById('passwordList');
         const customSettings = document.getElementById('customSettings');
         const strengthMeter = document.querySelector('.strength-meter div');
         const feedback = document.querySelector('.feedback');
@@ -158,8 +170,63 @@
             generatePassword();
         }
 
+        function savePassword() {
+            const service = serviceNameEl.value.trim();
+            const password = passwordEl.value;
+
+            if (!service || !password) {
+                alert('Please enter a service name and generate a password.');
+                return;
+            }
+
+            const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
+            savedPasswords[service] = password;
+            localStorage.setItem('savedPasswords', JSON.stringify(savedPasswords));
+
+            serviceNameEl.value = '';
+            updatePasswordList();
+        }
+
+        function updatePasswordList() {
+            const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
+            passwordListEl.innerHTML = '';
+
+            for (const [service, password] of Object.entries(savedPasswords)) {
+                const li = document.createElement('li');
+                li.className = 'password-item';
+                li.innerHTML = `
+                    <span>${service}</span>
+                    <span class="hidden-password">${password}</span>
+                    <div>
+                        <button class="toggle-password" onclick="togglePassword(this)">Show</button>
+                        <button onclick="deletePassword('${service}')">Delete</button>
+                    </div>
+                `;
+                passwordListEl.appendChild(li);
+            }
+        }
+
+        function togglePassword(button) {
+            const passwordSpan = button.parentElement.parentElement.querySelector('.hidden-password');
+            if (passwordSpan.style.display === 'none' || passwordSpan.style.display === '') {
+                passwordSpan.style.display = 'inline';
+                button.textContent = 'Hide';
+            } else {
+                passwordSpan.style.display = 'none';
+                button.textContent = 'Show';
+            }
+        }
+
+        function deletePassword(service) {
+            const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
+            delete savedPasswords[service];
+            localStorage.setItem('savedPasswords', JSON.stringify(savedPasswords));
+            updatePasswordList();
+        }
+
         generateBtn.addEventListener('click', generatePassword);
         copyBtn.addEventListener('click', copyPassword);
+        saveBtn.addEventListener('click', savePassword);
         lengthEl.addEventListener('input', updateLengthValue);
 
         document.querySelectorAll('input[name="charType"]').forEach(radio => {
@@ -173,6 +240,7 @@
         // Generate a password on page load
         generatePassword();
         toggleCustomSettings();
+        updatePasswordList();
     </script>
 </body>
 </html>
