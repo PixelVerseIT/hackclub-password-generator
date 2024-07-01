@@ -11,8 +11,8 @@
         <h1>Password Generator</h1>
         <div class="settings">
             <div class="slider-container">
-                <input type="range" id="length" min="4" max="50" value="12">
-                <span id="lengthValue">12</span>
+                <input type="range" id="length" min="4" max="50" value="16">
+                <span id="lengthValue">16</span>
             </div>
             <label>
                 <input type="radio" name="charType" id="easyToSay" value="easyToSay">
@@ -40,7 +40,7 @@
                     Include Numbers
                 </label>
                 <label>
-                    <input type="checkbox" id="symbols">
+                    <input type="checkbox" id="symbols" checked>
                     Include Symbols
                 </label>
             </div>
@@ -49,6 +49,10 @@
             <input type="text" id="password" readonly>
             <button id="copyBtn">Copy</button>
         </div>
+        <div class="strength-meter">
+            <div></div>
+        </div>
+        <p class="feedback"></p>
         <button id="generateBtn">Generate Password</button>
     </div>
 
@@ -63,6 +67,8 @@
         const generateBtn = document.getElementById('generateBtn');
         const copyBtn = document.getElementById('copyBtn');
         const customSettings = document.getElementById('customSettings');
+        const strengthMeter = document.querySelector('.strength-meter div');
+        const feedback = document.querySelector('.feedback');
 
         const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
@@ -99,21 +105,57 @@
             }
 
             passwordEl.value = password;
+            updateStrengthMeter(password);
+        }
+
+        function updateStrengthMeter(password) {
+            const strength = calculatePasswordStrength(password);
+            const percentage = (strength / 4) * 100;
+            strengthMeter.style.width = `${percentage}%`;
+            
+            if (strength <= 1) {
+                strengthMeter.style.backgroundColor = '#ff4d4d';
+                feedback.textContent = 'Weak: Try a longer password with more character types.';
+            } else if (strength <= 2) {
+                strengthMeter.style.backgroundColor = '#ffa64d';
+                feedback.textContent = 'Moderate: Good length, but mix character types for better security.';
+            } else if (strength <= 3) {
+                strengthMeter.style.backgroundColor = '#99cc00';
+                feedback.textContent = 'Strong: Great! Your password is hard to guess.';
+            } else {
+                strengthMeter.style.backgroundColor = '#22cc00';
+                feedback.textContent = 'Very Strong: Excellent! This password is highly secure.';
+            }
+        }
+
+        function calculatePasswordStrength(password) {
+            let strength = 0;
+            if (password.length >= 12) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^A-Za-z0-9]/)) strength++;
+            return Math.min(strength, 4);
         }
 
         function copyPassword() {
             passwordEl.select();
             document.execCommand('copy');
-            alert('Password copied to clipboard!');
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+            }, 2000);
         }
 
         function toggleCustomSettings() {
             const charType = document.querySelector('input[name="charType"]:checked').value;
             customSettings.style.display = charType === 'allCharacters' ? 'block' : 'none';
+            generatePassword();
         }
 
         function updateLengthValue() {
             lengthValueEl.textContent = lengthEl.value;
+            generatePassword();
         }
 
         generateBtn.addEventListener('click', generatePassword);
@@ -122,6 +164,10 @@
 
         document.querySelectorAll('input[name="charType"]').forEach(radio => {
             radio.addEventListener('change', toggleCustomSettings);
+        });
+
+        document.querySelectorAll('#customSettings input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', generatePassword);
         });
 
         // Generate a password on page load
