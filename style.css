@@ -6,6 +6,7 @@
     --text-color: #333;
     --border-color: #ccc;
 }
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
@@ -15,38 +16,58 @@ body {
     margin: 0;
     background-color: var(--background-color);
     color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
 }
+
 .container {
     background-color: var(--card-background);
     padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    max-width: 500px;
+    max-width: 600px;
     width: 100%;
 }
+
 h1, h2 {
     text-align: center;
     color: var(--primary-color);
     margin-bottom: 1.5rem;
 }
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    background-color: var(--background-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin: 0 0.5rem;
+}
+
+.tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
 .settings {
     margin-bottom: 1.5rem;
 }
-.settings label {
-    display: block;
-    margin-bottom: 0.8rem;
-}
-input[type="checkbox"], input[type="radio"] {
-    margin-right: 0.5rem;
-}
+
 .slider-container {
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
 }
+
 #length {
     flex-grow: 1;
-    margin-right: 1rem;
+    margin: 0 1rem;
     -webkit-appearance: none;
     width: 100%;
     height: 8px;
@@ -54,6 +75,7 @@ input[type="checkbox"], input[type="radio"] {
     background: #d3d3d3;
     outline: none;
 }
+
 #length::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -63,6 +85,7 @@ input[type="checkbox"], input[type="radio"] {
     background: var(--primary-color);
     cursor: pointer;
 }
+
 #length::-moz-range-thumb {
     width: 20px;
     height: 20px;
@@ -70,16 +93,25 @@ input[type="checkbox"], input[type="radio"] {
     background: var(--primary-color);
     cursor: pointer;
 }
-#lengthValue {
-    min-width: 2em;
-    text-align: right;
-    font-weight: bold;
+
+.checkbox-group, .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
+
+.checkbox-group label, .radio-group label {
+    display: flex;
+    align-items: center;
+}
+
 .password-container {
     display: flex;
     margin-bottom: 1rem;
 }
-#password, #serviceName {
+
+#password, #serviceName, #searchInput {
     flex-grow: 1;
     padding: 0.8rem;
     font-size: 1.2rem;
@@ -87,6 +119,7 @@ input[type="checkbox"], input[type="radio"] {
     border-radius: 4px;
     font-family: 'Courier New', Courier, monospace;
 }
+
 .button {
     padding: 0.8rem;
     background-color: var(--secondary-color);
@@ -96,43 +129,51 @@ input[type="checkbox"], input[type="radio"] {
     cursor: pointer;
     transition: background-color 0.3s;
 }
+
 .button:hover {
     background-color: #e09400;
 }
+
 #generateBtn {
     display: block;
     width: 100%;
     margin-bottom: 1rem;
     background-color: var(--primary-color);
 }
+
 #generateBtn:hover {
     background-color: #3a7bc8;
 }
+
 .strength-meter {
     height: 4px;
     background-color: #ddd;
     margin-bottom: 1rem;
-    transition: all 0.3s;
 }
-.strength-meter div {
+
+.strength-meter .meter {
     height: 100%;
     width: 0;
     transition: all 0.3s;
 }
+
 .feedback {
     font-size: 0.9rem;
     margin-bottom: 1rem;
     font-style: italic;
 }
-.saved-passwords {
-    margin-top: 2rem;
-    border-top: 1px solid var(--border-color);
-    padding-top: 1rem;
+
+.save-password {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
+
 .password-list {
     list-style-type: none;
     padding: 0;
 }
+
 .password-item {
     display: flex;
     justify-content: space-between;
@@ -140,6 +181,7 @@ input[type="checkbox"], input[type="radio"] {
     padding: 0.5rem;
     border-bottom: 1px solid var(--border-color);
 }
+
 .password-item button {
     background-color: #ff4d4d;
     color: white;
@@ -149,15 +191,48 @@ input[type="checkbox"], input[type="radio"] {
     cursor: pointer;
     margin-left: 0.5rem;
 }
+
 .password-item button:hover {
     background-color: #ff3333;
 }
+
 .password-item .toggle-password {
     background-color: var(--primary-color);
 }
+
 .password-item .toggle-password:hover {
     background-color: #3a7bc8;
 }
+
 .hidden-password {
     display: none;
+}
+
+.setting-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.danger {
+    background-color: #ff4d4d;
+}
+
+.danger:hover {
+    background-color: #ff3333;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .checkbox-group, .radio-group {
+        flex-direction: column;
+    }
+
+    .save-password {
+        flex-direction: column;
+    }
 }

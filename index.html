@@ -3,69 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Generator</title>
+    <title>Password Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1 style="margin-bottom: 2px;">Password App</h1>
-        <p style="text-align: center; margin-top: 0px;">By Hayden Kong</p>
-        <div class="settings">
-            <div class="slider-container">
-                <input type="range" id="length" min="4" max="50" value="16">
-                <span id="lengthValue">16</span>
+        <h1>Password Manager</h1>
+        <p style="text-align: center;">By Hayden Kong</p>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="generate">Generate</button>
+            <button class="tab-btn" data-tab="saved">Saved Passwords</button>
+            <button class="tab-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <div class="tab-content" id="generate">
+            <div class="settings">
+                <div class="slider-container">
+                    <label for="length">Password Length:</label>
+                    <input type="range" id="length" min="4" max="64" value="16">
+                    <span id="lengthValue">16</span>
+                </div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="uppercase" checked> Uppercase</label>
+                    <label><input type="checkbox" id="lowercase" checked> Lowercase</label>
+                    <label><input type="checkbox" id="numbers" checked> Numbers</label>
+                    <label><input type="checkbox" id="symbols" checked> Symbols</label>
+                </div>
+                <div class="radio-group">
+                    <label><input type="radio" name="charType" value="all" checked> All Characters</label>
+                    <label><input type="radio" name="charType" value="easy"> Easy to Read</label>
+                    <label><input type="radio" name="charType" value="pronounceable"> Pronounceable</label>
+                </div>
             </div>
-            <label>
-                <input type="radio" name="charType" id="easyToSay" value="easyToSay">
-                Easy to say
-            </label>
-            <label>
-                <input type="radio" name="charType" id="easyToRead" value="easyToRead">
-                Easy to read
-            </label>
-            <label>
-                <input type="radio" name="charType" id="allCharacters" value="allCharacters" checked>
-                All characters
-            </label>
-            <div id="customSettings">
-                <label>
-                    <input type="checkbox" id="uppercase" checked>
-                    Include Uppercase
-                </label>
-                <label>
-                    <input type="checkbox" id="lowercase" checked>
-                    Include Lowercase
-                </label>
-                <label>
-                    <input type="checkbox" id="numbers" checked>
-                    Include Numbers
-                </label>
-                <label>
-                    <input type="checkbox" id="symbols" checked>
-                    Include Symbols
-                </label>
+            <div class="password-container">
+                <input type="text" id="password" readonly>
+                <button id="copyBtn" class="button"><i class="fas fa-copy"></i></button>
+            </div>
+            <div class="strength-meter">
+                <div class="meter"></div>
+            </div>
+            <p class="feedback"></p>
+            <button id="generateBtn" class="button">Generate Password</button>
+            <div class="save-password">
+                <input type="text" id="serviceName" placeholder="Enter service name">
+                <button id="saveBtn" class="button">Save Password</button>
             </div>
         </div>
-        <div class="password-container">
-            <input type="text" id="password" readonly>
-            <button id="copyBtn" class="button">Copy</button>
+
+        <div class="tab-content" id="saved" style="display:none;">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search passwords...">
+            </div>
+            <ul id="passwordList" class="password-list"></ul>
         </div>
-        <div class="strength-meter">
-            <div></div>
-        </div>
-        <p class="feedback"></p>
-        <button id="generateBtn" class="button">Generate Password</button>
-        <div class="password-container">
-            <input type="text" id="serviceName" placeholder="Enter password name">
-            <button id="saveBtn" class="button">Save</button>
-        </div>
-        <div class="saved-passwords">
-            <h2>Saved Passwords</h2>
-            <ul class="password-list" id="passwordList"></ul>
+
+        <div class="tab-content" id="settings" style="display:none;">
+            <h2>Settings</h2>
+            <div class="setting-option">
+                <label for="autoLogout">Auto Logout (minutes)</label>
+                <input type="number" id="autoLogout" min="1" max="60" value="5">
+            </div>
+            <div class="setting-option">
+                <label for="passwordExpiration">Password Expiration Reminder (days)</label>
+                <input type="number" id="passwordExpiration" min="30" max="365" value="90">
+            </div>
+            <button id="clearDataBtn" class="button danger">Clear All Data</button>
         </div>
     </div>
 
     <script>
+        // DOM Elements
         const lengthEl = document.getElementById('length');
         const lengthValueEl = document.getElementById('lengthValue');
         const uppercaseEl = document.getElementById('uppercase');
@@ -78,33 +87,47 @@
         const saveBtn = document.getElementById('saveBtn');
         const serviceNameEl = document.getElementById('serviceName');
         const passwordListEl = document.getElementById('passwordList');
-        const customSettings = document.getElementById('customSettings');
-        const strengthMeter = document.querySelector('.strength-meter div');
-        const feedback = document.querySelector('.feedback');
+        const searchInputEl = document.getElementById('searchInput');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importInputEl = document.getElementById('importInput');
+        const darkModeToggle = document.getElementById('darkMode');
+        const autoLogoutEl = document.getElementById('autoLogout');
+        const passwordExpirationEl = document.getElementById('passwordExpiration');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
 
+        // Character sets
         const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
         const numberChars = '0123456789';
         const symbolChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-        const easyToSayChars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
         const easyToReadChars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        const pronounceableConsonants = 'bcdfghjklmnpqrstvwxyz';
+        const pronounceableVowels = 'aeiou';
 
+        // Password generation
         function generatePassword() {
             let chars = '';
             let password = '';
-
             const charType = document.querySelector('input[name="charType"]:checked').value;
 
-            if (charType === 'easyToSay') {
-                chars = easyToSayChars;
-            } else if (charType === 'easyToRead') {
-                chars = easyToReadChars;
-            } else {
+            if (charType === 'all') {
                 if (uppercaseEl.checked) chars += uppercaseChars;
                 if (lowercaseEl.checked) chars += lowercaseChars;
                 if (numbersEl.checked) chars += numberChars;
                 if (symbolsEl.checked) chars += symbolChars;
+            } else if (charType === 'easy') {
+                chars = easyToReadChars;
+            } else if (charType === 'pronounceable') {
+                for (let i = 0; i < lengthEl.value / 2; i++) {
+                    password += pronounceableConsonants[Math.floor(Math.random() * pronounceableConsonants.length)];
+                    password += pronounceableVowels[Math.floor(Math.random() * pronounceableVowels.length)];
+                }
+                passwordEl.value = password.slice(0, lengthEl.value);
+                updateStrengthMeter(password);
+                return;
             }
 
             if (chars === '') {
@@ -118,24 +141,28 @@
 
             passwordEl.value = password;
             updateStrengthMeter(password);
+            addToHistory(password);
         }
 
+        // Password strength meter
         function updateStrengthMeter(password) {
             const strength = calculatePasswordStrength(password);
-            const percentage = (strength / 4) * 100;
-            strengthMeter.style.width = `${percentage}%`;
-            
+            const meter = document.querySelector('.strength-meter .meter');
+            const feedback = document.querySelector('.feedback');
+
+            meter.style.width = `${(strength / 4) * 100}%`;
+
             if (strength <= 1) {
-                strengthMeter.style.backgroundColor = '#ff4d4d';
+                meter.style.backgroundColor = '#ff4d4d';
                 feedback.textContent = 'Weak: Try a longer password with more character types.';
             } else if (strength <= 2) {
-                strengthMeter.style.backgroundColor = '#ffa64d';
+                meter.style.backgroundColor = '#ffa64d';
                 feedback.textContent = 'Moderate: Good length, but mix character types for better security.';
             } else if (strength <= 3) {
-                strengthMeter.style.backgroundColor = '#99cc00';
+                meter.style.backgroundColor = '#99cc00';
                 feedback.textContent = 'Strong: Great! Your password is hard to guess.';
             } else {
-                strengthMeter.style.backgroundColor = '#22cc00';
+                meter.style.backgroundColor = '#22cc00';
                 feedback.textContent = 'Very Strong: Excellent! This password is highly secure.';
             }
         }
@@ -150,26 +177,15 @@
             return Math.min(strength, 4);
         }
 
-        function copyPassword() {
-            passwordEl.select();
-            document.execCommand('copy');
-            copyBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-            }, 2000);
+        // Password history
+        function addToHistory(password) {
+            let history = JSON.parse(localStorage.getItem('passwordHistory')) || [];
+            history.unshift({ password, timestamp: new Date().toISOString() });
+            history = history.slice(0, 10); // Keep only the last 10 passwords
+            localStorage.setItem('passwordHistory', JSON.stringify(history));
         }
 
-        function toggleCustomSettings() {
-            const charType = document.querySelector('input[name="charType"]:checked').value;
-            customSettings.style.display = charType === 'allCharacters' ? 'block' : 'none';
-            generatePassword();
-        }
-
-        function updateLengthValue() {
-            lengthValueEl.textContent = lengthEl.value;
-            generatePassword();
-        }
-
+        // Save password
         function savePassword() {
             const service = serviceNameEl.value.trim();
             const password = passwordEl.value;
@@ -180,32 +196,40 @@
             }
 
             const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
-            savedPasswords[service] = password;
+            savedPasswords[service] = { password, created: new Date().toISOString() };
             localStorage.setItem('savedPasswords', JSON.stringify(savedPasswords));
 
             serviceNameEl.value = '';
             updatePasswordList();
         }
 
+        // Update password list
         function updatePasswordList() {
             const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
+            const searchTerm = searchInputEl.value.toLowerCase();
+
             passwordListEl.innerHTML = '';
 
-            for (const [service, password] of Object.entries(savedPasswords)) {
-                const li = document.createElement('li');
-                li.className = 'password-item';
-                li.innerHTML = `
+            for (const [service, data] of Object.entries(savedPasswords)) {
+                if (
+                    (searchTerm === '' || service.toLowerCase().includes(searchTerm))
+                ) {
+                    const li = document.createElement('li');
+                    li.className = 'password-item';
+                    li.innerHTML = `
                     <span>${service}</span>
-                    <span class="hidden-password">${password}</span>
+                    <span class="hidden-password">${data.password}</span>
                     <div>
                         <button class="toggle-password" onclick="togglePassword(this)">Show</button>
                         <button onclick="deletePassword('${service}')">Delete</button>
                     </div>
                 `;
-                passwordListEl.appendChild(li);
+                    passwordListEl.appendChild(li);
+                }
             }
         }
 
+        // Toggle password visibility
         function togglePassword(button) {
             const passwordSpan = button.parentElement.parentElement.querySelector('.hidden-password');
             if (passwordSpan.style.display === 'none' || passwordSpan.style.display === '') {
@@ -217,6 +241,7 @@
             }
         }
 
+        // Delete password
         function deletePassword(service) {
             const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
             delete savedPasswords[service];
@@ -224,23 +249,118 @@
             updatePasswordList();
         }
 
+        
+
+        // Auto logout
+        let logoutTimer;
+        function startAutoLogoutTimer() {
+            clearTimeout(logoutTimer);
+            const logoutTime = autoLogoutEl.value * 60 * 1000; // Convert minutes to milliseconds
+            logoutTimer = setTimeout(() => {
+                alert('Just for security, you have been "logged out" due to inactivity. Please refresh the page to continue using the app.');
+            }, logoutTime);
+        }
+
+        // Password expiration check
+        function checkPasswordExpirations() {
+            const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
+            const expirationDays = parseInt(passwordExpirationEl.value);
+            const now = new Date();
+
+            for (const [service, data] of Object.entries(savedPasswords)) {
+                const createdDate = new Date(data.created);
+                const daysSinceCreation = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+
+                if (daysSinceCreation >= expirationDays) {
+                    alert(`The password for ${service} is ${daysSinceCreation} days old. Consider updating it.`);
+                }
+            }
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all saved passwords and settings? This action cannot be undone.')) {
+                localStorage.clear();
+                updatePasswordList();
+                alert('All data has been cleared.');
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            tabContents.forEach(content => content.style.display = 'none');
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).style.display = 'block';
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        }
+
+        // Event listeners
         generateBtn.addEventListener('click', generatePassword);
-        copyBtn.addEventListener('click', copyPassword);
+        copyBtn.addEventListener('click', () => {
+            passwordEl.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+        });
         saveBtn.addEventListener('click', savePassword);
-        lengthEl.addEventListener('input', updateLengthValue);
+        lengthEl.addEventListener('input', () => {
+            lengthValueEl.textContent = lengthEl.value;
+            generatePassword();
+        });
+        searchInputEl.addEventListener('input', updatePasswordList);
+        autoLogoutEl.addEventListener('change', () => {
+            localStorage.setItem('autoLogout', autoLogoutEl.value);
+            startAutoLogoutTimer();
+        });
+        passwordExpirationEl.addEventListener('change', () => {
+            localStorage.setItem('passwordExpiration', passwordExpirationEl.value);
+            checkPasswordExpirations();
+        });
+        clearDataBtn.addEventListener('click', clearAllData);
+        tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 
-        document.querySelectorAll('input[name="charType"]').forEach(radio => {
-            radio.addEventListener('change', toggleCustomSettings);
+        document.querySelectorAll('input[name="charType"], #customSettings input[type="checkbox"]').forEach(input => {
+            input.addEventListener('change', generatePassword);
         });
 
-        document.querySelectorAll('#customSettings input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', generatePassword);
-        });
+        // Initialize app
+        function initApp() {
+            // Set initial password length
+            lengthValueEl.textContent = lengthEl.value;
 
-        // Generate a password on page load
-        generatePassword();
-        toggleCustomSettings();
-        updatePasswordList();
+            // Load dark mode preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.checked = true;
+            }
+
+            // Load auto logout setting
+            const savedAutoLogout = localStorage.getItem('autoLogout');
+            if (savedAutoLogout) {
+                autoLogoutEl.value = savedAutoLogout;
+            }
+            startAutoLogoutTimer();
+
+            // Load password expiration setting
+            const savedPasswordExpiration = localStorage.getItem('passwordExpiration');
+            if (savedPasswordExpiration) {
+                passwordExpirationEl.value = savedPasswordExpiration;
+            }
+            checkPasswordExpirations();
+
+            // Generate initial password and update password list
+            generatePassword();
+            updatePasswordList();
+
+            // Set up activity listeners for auto logout
+            ['click', 'keypress', 'scroll'].forEach(event => {
+                document.addEventListener(event, startAutoLogoutTimer);
+            });
+        }
+
+        // Run initialization
+        initApp();
     </script>
-</body>
-</html>
+    </body>
+    
+    </html>
