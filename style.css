@@ -94,6 +94,35 @@ h1, h2 {
     cursor: pointer;
 }
 
+#wordCount {
+    flex-grow: 1;
+    margin: 0 1rem;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+}
+
+#wordCount::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+}
+
+#wordCount::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+}
+
 .checkbox-group, .radio-group {
     display: flex;
     flex-wrap: wrap;
@@ -111,7 +140,7 @@ h1, h2 {
     margin-bottom: 1rem;
 }
 
-#password, #serviceName, #category, #searchInput, #categoryFilter {
+#password, #serviceName, #passphraseServiceName, #passphraseCategory, #category, #searchInput, #categoryFilter, #passphraseOutput {
     flex-grow: 1;
     padding: 0.8rem;
     font-size: 1.2rem;
@@ -134,7 +163,7 @@ h1, h2 {
     background-color: #e09400;
 }
 
-#generateBtn {
+#generateBtn, #generatePassphraseBtn {
     display: block;
     width: 100%;
     margin-bottom: 1rem;
@@ -163,7 +192,7 @@ h1, h2 {
     font-style: italic;
 }
 
-.save-password {
+.save-password, .save-passphrase {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
@@ -307,4 +336,10 @@ body.dark-mode .tab-btn.active {
     border: 2px solid var(--border-color);
     border-radius: 4px;
     font-family: 'Courier New', Courier, monospace;
+}
+
+.word-list-container{
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
 }

@@ -14,6 +14,7 @@
         
         <div class="tabs">
             <button class="tab-btn active" data-tab="generate">Generate</button>
+            <button class="tab-btn" data-tab="passphrase">Passphrase</button>
             <button class="tab-btn" data-tab="saved">Saved Passwords</button>
             <button class="tab-btn" data-tab="settings">Settings</button>
         </div>
@@ -96,6 +97,47 @@
             </div>
             <button id="clearDataBtn" class="button danger">Clear All Data</button>
         </div>
+
+        <div class="tab-content" id="passphrase" style="display:none;">
+            <div class="slider-container">
+                <label for="wordCount">Number of Words:</label>
+                <input type="range" id="wordCount" min="3" max="7" value="4">
+                <span id="wordCountValue">4</span>
+            </div> 
+            
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="capitalizeFirst" checked> Capitalize first letter</label>
+                <label><input type="checkbox" id="addNumber"> Add a random number</label>
+                <label><input type="checkbox" id="addSpecialChar"> Include a special character</label>
+            </div>
+            <div class="word-list-container">
+                <label for="wordList">Word List:</label>
+                <select id="wordList">
+                    <option value="common">Common Words</option>
+                    <option value="nature">Nature Words</option>
+                    <option value="tech">Tech Terms</option>
+                </select>
+            </div>
+            <div class="password-container">
+                <input type="text" id="passphraseOutput" readonly>
+                <button id="copyPassphraseBtn" class="button"><i class="fas fa-copy"></i></button>
+            </div>
+            <button id="generatePassphraseBtn" class="button">Generate Passphrase</button>
+            <div class="save-passphrase">
+                <input type="text" id="passphraseServiceName" placeholder="Enter service name">
+                <select id="passphraseCategory">
+                    <option value="">Select Category</option>
+                    <option value="social">Social Media</option>
+                    <option value="finance">Finance</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                </select>
+                <button id="savePassphraseBtn" class="button">Save Passphrase</button>
+            </div>
+        </div>
+    </div>
+
+
     </div>
 
     <script>
@@ -354,13 +396,18 @@
             }
         }
 
-        // Tab switching
+        // Modify the existing tab switching function to include the new passphrase tab
         function switchTab(tabName) {
-            tabContents.forEach(content => content.style.display = 'none');
-            tabBtns.forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName).style.display = 'block';
             document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
         }
+
+        // Add event listeners for the new tab button
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
 
         // Event listeners
         generateBtn.addEventListener('click', generatePassword);
@@ -430,6 +477,93 @@
                 document.addEventListener(event, startAutoLogoutTimer);
             });
         }
+
+        // New Passphrase Generator code
+        const wordLists = {
+            common: ['correct', 'horse', 'battery', 'staple', 'apple', 'banana', 'orange', 'grape', 'table', 'chair', 'lamp', 'book', 'pen', 'paper', 'computer', 'phone', 'water', 'coffee', 'bread', 'cheese'],
+            nature: ['mountain', 'river', 'forest', 'ocean', 'sky', 'sun', 'moon', 'star', 'tree', 'flower', 'grass', 'rock', 'cloud', 'rain', 'snow', 'wind', 'leaf', 'seed', 'root', 'branch'],
+            tech: ['algorithm', 'browser', 'cloud', 'database', 'encryption', 'firewall', 'gigabyte', 'hardware', 'interface', 'javascript', 'kernel', 'linux', 'modem', 'network', 'protocol', 'query', 'router', 'server', 'terminal', 'virtual']
+        };
+
+        const specialChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+        function generatePassphrase() {
+            const wordCount = parseInt(document.getElementById('wordCount').value);
+            const capitalizeFirst = document.getElementById('capitalizeFirst').checked;
+            const addNumber = document.getElementById('addNumber').checked;
+            const addSpecialChar = document.getElementById('addSpecialChar').checked;
+            const selectedWordList = document.getElementById('wordList').value;
+
+            let passphrase = [];
+
+            for (let i = 0; i < wordCount; i++) {
+                let word = wordLists[selectedWordList][Math.floor(Math.random() * wordLists[selectedWordList].length)];
+                if (capitalizeFirst) {
+                    word = word.charAt(0).toUpperCase() + word.slice(1);
+                }
+                passphrase.push(word);
+            }
+
+            if (addNumber) {
+                passphrase.push(Math.floor(Math.random() * 100).toString());
+            }
+
+            if (addSpecialChar) {
+                passphrase.push(specialChars.charAt(Math.floor(Math.random() * specialChars.length)));
+            }
+
+            document.getElementById('passphraseOutput').value = passphrase.join('-');
+        }
+
+        document.getElementById('generatePassphraseBtn').addEventListener('click', generatePassphrase);
+
+        document.getElementById('wordCount').addEventListener('input', function() {
+            document.getElementById('wordCountValue').textContent = this.value;
+        });
+
+        document.getElementById('copyPassphraseBtn').addEventListener('click', function() {
+            const passphraseOutput = document.getElementById('passphraseOutput');
+            passphraseOutput.select();
+            document.execCommand('copy');
+            this.textContent = 'Copied!';
+            setTimeout(() => this.innerHTML = '<i class="fas fa-copy"></i>', 2000);
+        });
+
+        document.getElementById('savePassphraseBtn').addEventListener('click', function() {
+            const service = document.getElementById('passphraseServiceName').value.trim();
+            const passphrase = document.getElementById('passphraseOutput').value;
+            const category = document.getElementById('passphraseCategory').value;
+
+            if (!service || !passphrase) {
+                alert('Please enter a service name and generate a passphrase.');
+                return;
+            }
+
+            const savedPasswords = JSON.parse(localStorage.getItem('savedPasswords')) || {};
+            savedPasswords[service] = { password: passphrase, category, created: new Date().toISOString() };
+            localStorage.setItem('savedPasswords', JSON.stringify(savedPasswords));
+
+            document.getElementById('passphraseServiceName').value = '';
+            document.getElementById('passphraseCategory').value = '';
+            alert('Passphrase saved successfully!');
+            updatePasswordList();
+        });
+
+        // Modify the existing tab switching function to include the new passphrase tab
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).style.display = 'block';
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        }
+
+        // Add event listeners for the new tab button
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // Initialize the passphrase generator
+        generatePassphrase();
 
         // Run initialization
         initApp();
