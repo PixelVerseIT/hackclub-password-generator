@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Password Generator</h1>
+        <div class="settings">
+            <div class="slider-container">
+                <input type="range" id="length" min="4" max="50" value="12">
+                <span id="lengthValue">12</span>
+            </div>
+            <label>
+                <input type="radio" name="charType" id="easyToSay" value="easyToSay">
+                Easy to say
+            </label>
+            <label>
+                <input type="radio" name="charType" id="easyToRead" value="easyToRead">
+                Easy to read
+            </label>
+            <label>
+                <input type="radio" name="charType" id="allCharacters" value="allCharacters" checked>
+                All characters
+            </label>
+            <div id="customSettings">
+                <label>
+                    <input type="checkbox" id="uppercase" checked>
+                    Include Uppercase
+                </label>
+                <label>
+                    <input type="checkbox" id="lowercase" checked>
+                    Include Lowercase
+                </label>
+                <label>
+                    <input type="checkbox" id="numbers" checked>
+                    Include Numbers
+                </label>
+                <label>
+                    <input type="checkbox" id="symbols">
+                    Include Symbols
+                </label>
+            </div>
+        </div>
+        <div class="password-container">
+            <input type="text" id="password" readonly>
+            <button id="copyBtn">Copy</button>
+        </div>
+        <button id="generateBtn">Generate Password</button>
+    </div>
+
+    <script>
+        const lengthEl = document.getElementById('length');
+        const lengthValueEl = document.getElementById('lengthValue');
+        const uppercaseEl = document.getElementById('uppercase');
+        const lowercaseEl = document.getElementById('lowercase');
+        const numbersEl = document.getElementById('numbers');
+        const symbolsEl = document.getElementById('symbols');
+        const passwordEl = document.getElementById('password');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const customSettings = document.getElementById('customSettings');
+
+        const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+        const numberChars = '0123456789';
+        const symbolChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+        const easyToSayChars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+        const easyToReadChars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+
+        function generatePassword() {
+            let chars = '';
+            let password = '';
+
+            const charType = document.querySelector('input[name="charType"]:checked').value;
+
+            if (charType === 'easyToSay') {
+                chars = easyToSayChars;
+            } else if (charType === 'easyToRead') {
+                chars = easyToReadChars;
+            } else {
+                if (uppercaseEl.checked) chars += uppercaseChars;
+                if (lowercaseEl.checked) chars += lowercaseChars;
+                if (numbersEl.checked) chars += numberChars;
+                if (symbolsEl.checked) chars += symbolChars;
+            }
+
+            if (chars === '') {
+                alert('Please select at least one character type.');
+                return;
+            }
+
+            for (let i = 0; i < lengthEl.value; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            passwordEl.value = password;
+        }
+
+        function copyPassword() {
+            passwordEl.select();
+            document.execCommand('copy');
+            alert('Password copied to clipboard!');
+        }
+
+        function toggleCustomSettings() {
+            const charType = document.querySelector('input[name="charType"]:checked').value;
+            customSettings.style.display = charType === 'allCharacters' ? 'block' : 'none';
+        }
+
+        function updateLengthValue() {
+            lengthValueEl.textContent = lengthEl.value;
+        }
+
+        generateBtn.addEventListener('click', generatePassword);
+        copyBtn.addEventListener('click', copyPassword);
+        lengthEl.addEventListener('input', updateLengthValue);
+
+        document.querySelectorAll('input[name="charType"]').forEach(radio => {
+            radio.addEventListener('change', toggleCustomSettings);
+        });
+
+        // Generate a password on page load
+        generatePassword();
+        toggleCustomSettings();
+    </script>
+</body>
+</html>
